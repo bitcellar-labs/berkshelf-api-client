@@ -26,17 +26,16 @@ module Berkshelf::APIClient
     # @option options [Float] :retry_interval (0.5)
     #   how long to wait (in seconds) between each retry
     def initialize(url, options = {})
-      options         = options.reverse_merge(retries: 3, retry_interval: 0.5,
-        open_timeout: 3, timeout: 30)
+      options         = options.reverse_merge(request: { open_timeout: 3, timeout: 30 })
       @url            = url
       @retries        = options[:retries]
       @retry_interval = options[:retry_interval]
 
-      options[:builder] ||= Faraday::Builder.new do |b|
+      options[:builder] ||= Faraday::RackBuilder.new do |b|
         b.response :parse_json
         b.response :gzip
         b.request :retry,
-          max: self.retries,
+          max: @retries,
           interval: self.retry_interval,
           exceptions: [
             Faraday::Error::TimeoutError,
